@@ -5,8 +5,24 @@ CBoard::CBoard()
 {
 	liveMarker = 'O';
 	deadMarker = ' ';
+	/*Seed Level will determine odds of a
+	cell being dead when board is seeded*/
 	seedLevel = 75;
-	sleepTime = 100;
+	/*Sleep Time is the time in miliseconds
+	between update-print cylces. Intended to
+	make viewing easier*/
+	sleepTime = 200;
+
+	/*Three Rules:
+	If cell is Live:
+	 1- count < liveLowerBound, cell dies
+	 2- count > liveUpperBound, cell dies
+	If cell is Dead:
+	 3- count == deadRevive, cell lives
+	*/
+	liveLowerBound = 2; //Standard is 2
+	liveUpperBound = 3; //Standard is 3
+	deadRevive = 3;     //Standard is 3
 }
 
 
@@ -14,6 +30,7 @@ CBoard::~CBoard(void)
 {
 }
 
+//Mode: 1 = random, 2 = demonstration
 void CBoard::playGameOfLife(int mode){
 	seedBoard(mode);
 	pullBoard();
@@ -35,22 +52,23 @@ void CBoard::pullBoard(void){
 	}
 }
 
+//Mode: 1 = random, 2 = demonstration
 void CBoard::seedBoard(int mode){
 	if (mode == 1){
-	int temp = 0;
-	std::mt19937 randGen(time(NULL));
-	std::uniform_int_distribution<int> roll(1,100);
+		int temp = 0;
+		std::mt19937 randGen(time(NULL));
+		std::uniform_int_distribution<int> roll(1,100);
 
-	for (int i = 0; i < 24; i++){
-		for (int j = 0; j < 75; j++){
-			temp = roll(randGen);
-			if (temp >= seedLevel){
-				transitionBoard[i][j] = liveMarker;
-			} else {
-				transitionBoard[i][j] = deadMarker;
+		for (int i = 0; i < 24; i++){
+			for (int j = 0; j < 75; j++){
+				temp = roll(randGen);
+				if (temp >= seedLevel){
+					transitionBoard[i][j] = liveMarker;
+				} else {
+					transitionBoard[i][j] = deadMarker;
+				}
 			}
 		}
-	}
 	} else if (mode == 2) {
 		for (int i = 0; i < 24; i++){
 			for (int j = 0; j < 75; j++){
@@ -100,11 +118,11 @@ void CBoard::updateBoard(void){
 		for (int j = 0; j < 75; j++){
 			int count = checkCount(j,i);
 			if (realBoard[i][j] == liveMarker){
-				if ((count < 2)||(count > 3)){
+				if ((count < liveLowerBound)||(count > liveUpperBound)){
 					transitionBoard[i][j] = deadMarker;
 				}
 			} else {
-				if (count == 3){
+				if (count == deadRevive){
 					transitionBoard[i][j] = liveMarker;
 				}
 			}
@@ -112,6 +130,7 @@ void CBoard::updateBoard(void){
 	}
 }
 
+//X and Y: denotes a cell in the realBoard array = realBoard[y][x]
 int CBoard::checkCount(int x, int y){
 	int count = 0;
 
@@ -169,7 +188,6 @@ int CBoard::checkCount(int x, int y){
 		if (realBoard[y][x+1] == liveMarker){count++;}
 		if (realBoard[y-1][x+1] == liveMarker){count++;}
 	}
-
 	return count;
 }
 
